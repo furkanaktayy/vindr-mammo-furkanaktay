@@ -1,0 +1,35 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb_checkpoints
+
+# Virtual environments
+venv/
+env/
+*.env
+mammo-venv/
+.mammo-venv/
+
+# VS Code
+.vscode/
+
+# MacOS system files
+.DS_Store
+
+# Data - DO NOT COMMIT DATA
+data/raw/
+data/processed/images/
+data/processed/labels_yolo/
+data/processed/*.csv
+
+# YOLO training outputs
+runs/
+wandb/
+results/
+*.log
+
+# Temp files
+tmp/
+temp/
