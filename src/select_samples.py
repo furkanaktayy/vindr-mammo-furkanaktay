@@ -72,7 +72,10 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
 
  final_pairs = lesion_pairs + list(no_lesion_selection)
  pair_df = pd.DataFrame(final_pairs, columns=["study_id", "image_id"])
+
+ 
  df_merge = pair_df.merge(breast, on=["study_id", "image_id"], how="left")
+ df_merge = df_merge.merge(findings, on=["study_id", "image_id"], how="left")
  
  meta_cols = metadata.columns.tolist()
  meta_key = None
