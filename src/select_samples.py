@@ -9,7 +9,7 @@ metadata_path = "data/raw/metadata.csv"
 
 # Total 50 adet sample (40 adet lezyonlu, 10 adet lezyonsuz) seçilir
 # Lezyonlular çeşitli lezyon tiplerinden seçilir. Farklı hastalardan veri alınmasına dikkat edilir
-def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/processed/subset_samples", number_lesion=40, number_noLesion=10):
+def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/processed/subset_samples.csv", number_lesion=40, number_noLesion=10):
  print("reading csv files...")
  findings = pd.read_csv(finding_path)
  breast = pd.read_csv(breast_path)
