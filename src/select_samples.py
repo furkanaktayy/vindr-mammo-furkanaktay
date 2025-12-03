@@ -72,26 +72,31 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
 
  final_pairs = lesion_pairs + list(no_lesion_selection)
  pair_df = pd.DataFrame(final_pairs, columns=["study_id", "image_id"])
- subset_breast = pair_df.merge(breast, on=["study_id", "image_id"], how="left")
+ df_merge = pair_df.merge(breast, on=["study_id", "image_id"], how="left")
  
- possible_cols = [c for c in metadata.columns if "image" in c.lower()]
+ meta_cols = metadata.columns.tolist()
+ meta_key = None
 
- if len(possible_cols) == 0:
-  print("⚠ ERROR: No column in metadata looks like an image_id!")
-  print("Metadata columns:", metadata.columns)
-  return
+ for key in ["image", "dicom", "file", "uid", "id"]:
+  for col in meta_cols:
+   if key in col.lower():   # image_id, dicom_id, file_path vs olabilir
+    meta_key = col
+    break
+   if meta_key:
+    break
 
- meta_img_col = possible_cols[0]
- print(f"Metadata image column detected: {meta_img_col}\n")
-
- subset_df = subset_breast.merge(metadata, left_on="image_id", right_on=meta_img_col, how="left")
+ if meta_key is None:
+  print("Merge skipping. No match.")
+ else:
+  print(f"Metadata image matching key detected → {meta_key}")
+  df_merge = df_merge.merge(metadata, left_on="image_id", right_on=meta_key, how="left")
 
  
  Path("data/processed").mkdir(parents=True, exist_ok=True)
- subset_df.to_csv(out_csv, index=False)
+ df_merge.to_csv(out_csv, index=False)
 
  print("Process completed.")
- print(f"Number of final selected sample image: {len(subset_df)}")
+ print(f"Number of final selected sample image: {len(df_merge)}")
  print(f"Output file: {out_csv}")
 
 if __name__ == "__main__":
