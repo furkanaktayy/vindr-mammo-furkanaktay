@@ -23,6 +23,7 @@ data/raw/
 data/processed/images/
 data/processed/labels_yolo/
 data/processed/*.csv
+data/processed/
 
 # YOLO training outputs
 runs/
@@ -33,3 +34,4 @@ results/
 # Temp files
 tmp/
 temp/
+
