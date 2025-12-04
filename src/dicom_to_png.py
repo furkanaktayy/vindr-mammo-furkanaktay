@@ -5,7 +5,7 @@ import pydicom
 from pydicom.pixel_data_handlers.util import apply_voi_lut
 from PIL import Image
 
-def dicom_to_png(subset_csv_path = "data/processed/subset_samples.csv", dicom_root = "data/raw/dicoms", out_dir = "data/processed/images"):
+def dicom_to_png(subset_csv_path = "data/processed/subset_samples_150.csv", dicom_root = "data/raw/dicoms", out_dir = "data/processed/images"):
  subset_csv_path = Path(subset_csv_path)
  dicom_root = Path(dicom_root)
  out_dir = Path(out_dir)
@@ -13,7 +13,7 @@ def dicom_to_png(subset_csv_path = "data/processed/subset_samples.csv", dicom_ro
  print(f"Reading subset csv from: {subset_csv_path}")
  subset_df = pd.read_csv(subset_csv_path)
 
- df_pairs = subset_df[["study_id", "image_id"]].drop_duplicates()
+ df_pairs = subset_df[["study_id_x", "image_id"]].drop_duplicates()
  print(f"Number of unique pairs: {len(df_pairs)}")
 
  out_dir.mkdir(parents=True, exist_ok=True)
@@ -21,7 +21,7 @@ def dicom_to_png(subset_csv_path = "data/processed/subset_samples.csv", dicom_ro
  num_fail = 0
 
  for _, row in df_pairs.iterrows():
-  study_id = str(row["study_id"])
+  study_id = str(row["study_id_x"])
   image_id = str(row["image_id"])
 
   dicom_path = dicom_root / study_id / f"{image_id}.dicom"
