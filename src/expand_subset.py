@@ -1,3 +1,5 @@
+# Bu script, mevcut subsete ek veriler ekleyerek hedeflenen lezyonlu ve lezyonsuz görüntü sayılarına ulaşmayı sağlar.
+
 import pandas as pd
 import numpy as np
 from pathlib import Path

@@ -1,3 +1,6 @@
+#  Her lezyon için YOLO formatında tek satır oluşturulur
+# <class_id> <xc> <yc> <w> <h>
+
 import pandas as pd
 import ast
 from pathlib import Path
@@ -36,6 +39,7 @@ def detect_study_id_column(df):
     raise ValueError("there is no column found about study_id in the subset csv!")
 
 # YOLO bbox dönüşümü. yolo formatında hepsi [0,1] arasında olmalıdır. dönüşüm yapılır.
+# tüm bounding box değerleri 0–1 aralığındadır ve model görüntü çözünürlüğünden bağımsız çalışır.
 def convert_to_yolo(xmin, ymin, xmax, ymax, imgw, imgh):
     xc = (xmin + xmax) / 2.0 / imgw
     yc = (ymin + ymax) / 2.0 / imgh
