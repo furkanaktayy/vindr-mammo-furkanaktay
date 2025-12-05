@@ -22,6 +22,15 @@ The aim is to enable the detection of lesions such as:
 
 Using YOLO-based models in mammography images used in breast cancer screenings, and to examine the performance of object detection models.
 
+## Pipeline Execution Order
+
+1. src/select_samples.py
+2. src/expand_subset.py
+3. dicom_to_png.py
+4. create_yolo_label.py
+5. prepare_yolo_dataset.py
+6. pipeline.ipynb
+
 ## Project Folder Structure
 
 ```plaintext
