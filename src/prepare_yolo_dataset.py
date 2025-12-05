@@ -13,7 +13,7 @@ images_path = "data/processed/images"
 labels_path = "data/processed/labels_yolo"
 output_root = "data/processed/yolo"
 
-
+# klasör yoksa oluşturur, varsa hata vermez, tüm ara klasörleri oluşturur
 def ensure_dir(p):
     p = Path(p)
     p.mkdir(parents=True, exist_ok=True)
@@ -23,43 +23,32 @@ def main():
     print("Loading subset_samples.csv...")
     df = pd.read_csv(subset_path)
 
-    # ------------------------------
-    # 1) study_id kolonunu otomatik bul
-    # ------------------------------
+    # study_id column otomatik bulunur.
     study_cols = [c for c in df.columns if c.startswith("study_id")]
     if len(study_cols) == 0:
-        raise ValueError("❌ ERROR: No study_id column found in CSV.")
+        raise ValueError("No study_id column found in CSV.")
 
     study_col = study_cols[0]
     print(f"Detected study_id column → {study_col}")
 
-    # ------------------------------
-    # 2) Unique study-image pairs
-    # ------------------------------
+    # benzersiz çiftler alınır
     df_pairs = df[[study_col, "image_id"]].drop_duplicates()
 
-    # ------------------------------
-    # 3) has_lesion flag
-    # ------------------------------
+    # lezyon içeren görüntüler belirlenir. txt dosyaları kontrol edilir. boşsa lezyonsuz.
     label_files = {Path(f).stem for f in Path(labels_path).glob("*.txt")}
     df_pairs["has_lesion"] = df_pairs["image_id"].isin(label_files).astype(int)
 
     print("\nLesion distribution:")
     print(df_pairs["has_lesion"].value_counts())
 
-    # ------------------------------
-    # 4) Split test first
-    # ------------------------------
+    # test seti ayrılır
     df_temp, df_test = train_test_split(
         df_pairs,
         test_size=TEST_COUNT,
         stratify=df_pairs["has_lesion"],
         random_state=42
     )
-
-    # ------------------------------
-    # 5) Split train + val
-    # ------------------------------
+    # train val split yapılır
     df_train, df_val = train_test_split(
         df_temp,
         test_size=VAL_COUNT,
@@ -67,9 +56,6 @@ def main():
         random_state=42
     )
 
-    # ------------------------------
-    # 6) Assertions
-    # ------------------------------
     assert len(df_train) == TRAIN_COUNT
     assert len(df_val) == VAL_COUNT
     assert len(df_test) == TEST_COUNT
@@ -78,17 +64,13 @@ def main():
     print(f"Train = {len(df_train)}")
     print(f"Val   = {len(df_val)}")
     print(f"Test  = {len(df_test)}")
-
-    # ------------------------------
-    # 7) Prepare folders
-    # ------------------------------
+    
+    # split klasörleri oluşturulur
     for split in ["train", "val", "test"]:
         ensure_dir(f"{output_root}/images/{split}")
         ensure_dir(f"{output_root}/labels/{split}")
-
-    # ------------------------------
-    # 8) File copy function
-    # ------------------------------
+    
+    # split klasörlerine dosyalar kopyalanır
     def copy_files(df_split, split_name):
         for _, row in df_split.iterrows():
             img_id = row["image_id"]
@@ -109,9 +91,7 @@ def main():
     copy_files(df_val, "val")
     copy_files(df_test, "test")
 
-    # ------------------------------
-    # 9) data.yaml oluştur
-    # ------------------------------
+    # YOLO data.yaml dosyası oluşturulur.
     yaml_path = Path(output_root) / "data.yaml"
     with open(yaml_path, "w") as f:
         f.write(
@@ -122,7 +102,7 @@ def main():
             "names: ['lesion']\n"
         )
 
-    print("\n✔ YOLO train/val/test dataset created successfully!")
+    print("\nYOLO train/val/test dataset created successfully!")
     print(f"data.yaml saved to: {yaml_path}")
 
 

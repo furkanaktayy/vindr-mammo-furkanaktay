@@ -6,8 +6,6 @@ finding_path = "/Users/furkanaktay/Desktop/tübitak/2247-c_IlkayOksuz/task/vindr
 breast_path = "/Users/furkanaktay/Desktop/tübitak/2247-c_IlkayOksuz/task/vindr-mammo-furkanaktay/data/raw/breast-level_annotations.csv"
 metadata_path = "data/raw/metadata.csv"
 
-
-# Total 50 adet sample (40 adet lezyonlu, 10 adet lezyonsuz) seçilir
 # Lezyonlular çeşitli lezyon tiplerinden seçilir. Farklı hastalardan veri alınmasına dikkat edilir
 def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/processed/subset_samples.csv", number_lesion=40, number_noLesion=10):
  print("reading csv files...")
@@ -17,6 +15,7 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
  print("csv file read.")
 
  # finding_categories kolonu parse edilir
+ # YOLO için tek kategori gerekmektedir. Primary finding alınıyor.
  def extract_category(x):
   try:
    lst = eval(x)
@@ -26,10 +25,12 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
  
  findings["category"] = findings["finding_categories"].apply(extract_category)
  
+ # dört adet valid lesion tipi seçiliyor.
  valid_categories = ["Mass", "Suspicious Calcification", "Asymmetry", "Architectural Distortion"]
  lesion_df = findings[findings["category"].isin(valid_categories)]
 
- # Her kategori için image_id ve study_id 
+ # Her kategori için image_id ve study_id eşleşmeleri çıkartılır. Her görüntünün bir defa alınmasını sağlar.
+ # Her kategori için benzersiz image_id ve study_id eşleşmesi oluşturulur.
  def get_pairs(df, category_name):
   sub = df[df["category"] == category_name]
   return sub[["study_id", "image_id"]].drop_duplicates().values.tolist()
@@ -52,11 +53,13 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
   idx = rng.choice(len(pairs), n_actual, replace=False)
   return [pairs[i] for i in idx]
  
+ # Her kategoriden random select yapılır.
  mass_selection = random_select(mass_pairs, 10)
  calc_selection = random_select(calc_pairs, 10)
  asym_selection = random_select(asym_pairs, 10)
  dist_selection = random_select(dist_pairs, 10)
 
+# Olası tekrarlar varsa temizlenir
  lesion_pairs = mass_selection + calc_selection + asym_selection + dist_selection
  lesion_pairs = list(set(tuple(x) for x in lesion_pairs))
  print(f"Total selected lesion image number: {len(lesion_pairs)}")
@@ -70,6 +73,7 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
  no_lesion_selection = rng.choice(no_lesion_candidates, n_no_lesion_actual, replace=False)
  print(f"Number of no lesion sample selected: {len(no_lesion_selection)}")
 
+# dataframe oluşturulur
  final_pairs = lesion_pairs + list(no_lesion_selection)
  pair_df = pd.DataFrame(final_pairs, columns=["study_id", "image_id"])
 
@@ -79,6 +83,7 @@ def select_samples(finding_path, breast_path, metadata_path, out_csv= "data/proc
  meta_cols = metadata.columns.tolist()
  meta_key = None
 
+# metadata merg edilir
  for key in ["image", "dicom", "file", "uid", "id"]:
   for col in meta_cols:
    if key in col.lower():   

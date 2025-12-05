@@ -51,7 +51,7 @@ def main():
  print("\nTotal new data:", len(df_new))
 
  df_new.to_csv(out_csv, index=False)
- print(f"✔ Yeni subset kaydedildi: {out_csv}")
+ print(f"Yeni subset kaydedildi: {out_csv}")
 
 
 if __name__ == "__main__":

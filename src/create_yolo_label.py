@@ -7,13 +7,16 @@ subset_path = "data/processed/subset_samples_150.csv"
 labels_dir = "data/processed/labels_yolo"
 images_dir = "data/processed/images"  # boş txt için
 
+# çok sınıflı YOLO dedeksiyonu için zorunludur.
+# her kategori YOLO'da numerik sınıfa dönüşür.
 CLASS_MAP = {
     "Mass": 0,
     "Suspicious Calcification": 1,
     "Asymmetry": 2,
     "Architectural Distortion": 3,
 }
-
+# annotation dosyasındaki liste formatındaki kategori fieldını çözer
+# alt tipler tek sınıfta toplanır, listenin ilk elemanı kategori olarak alınır
 def extract_category(cat_str):
     try:
         lst = ast.literal_eval(cat_str)
@@ -27,12 +30,12 @@ def extract_category(cat_str):
         return None
 
 def detect_study_id_column(df):
-    """study_id kolonunu otomatik bulur."""
     for col in df.columns:
         if "study_id" in col.lower():
             return col
-    raise ValueError("❌ subset CSV içinde study_id ile ilgili kolon bulunamadı!")
+    raise ValueError("there is no column found about study_id in the subset csv!")
 
+# YOLO bbox dönüşümü. yolo formatında hepsi [0,1] arasında olmalıdır. dönüşüm yapılır.
 def convert_to_yolo(xmin, ymin, xmax, ymax, imgw, imgh):
     xc = (xmin + xmax) / 2.0 / imgw
     yc = (ymin + ymax) / 2.0 / imgh
@@ -47,22 +50,15 @@ def create_labels():
 
     print(f"Subset row count = {len(subset_df)}")
 
-    # -------------------------------
-    # 1) detect correct study_id column
-    # -------------------------------
     study_col = detect_study_id_column(subset_df)
     print(f"Detected study_id column → {study_col}")
 
-    # -------------------------------
-    # 2) filter valid lesion categories
-    # -------------------------------
+    # lesion olmayan category'ler elenir sadece dört main category kalır
     find_df["category"] = find_df["finding_categories"].apply(extract_category)
     valid_categories = list(CLASS_MAP.keys())
     lesion_df = find_df[find_df["category"].isin(valid_categories)]
 
-    # -------------------------------
-    # 3) merge lesion annotations with subset
-    # -------------------------------
+    # subset içinde olan görüntülerden sadece anotasyon olanları alınır
     merged = lesion_df.merge(
         subset_df[[study_col, "image_id"]],
         left_on=["study_id", "image_id"],
@@ -72,14 +68,14 @@ def create_labels():
 
     print(f"Matched lesion annotations: {len(merged)}")
 
+    # yolo dosyaları yazılır
     labels_root = Path(labels_dir)
     labels_root.mkdir(parents=True, exist_ok=True)
 
-    # -------------------------------
-    # 4) create label files for lesion images
-    # -------------------------------
     count_label = 0
 
+    # her görüntü için bbox yazılır, bir görüntüde birden fazla lezyon olabilir o yüzden groupby kullanılır
+    # her boundingbox dönüştürülür ve dosyaya yazılır
     for (study_id, image_id), group in merged.groupby(["study_id", "image_id"]):
         out_file = labels_root / f"{image_id}.txt"
         lines = []
@@ -100,10 +96,7 @@ def create_labels():
         count_label += 1
 
     print(f"Label files created (lesion): {count_label}")
-
-    # -------------------------------
-    # 5) empty txt for no-lesion images
-    # -------------------------------
+    # yolo için her png'nin bir txt karşılığı olmalıdır. lezyonsuzlar için boş txt oluşturulur.
     png_ids = {p.stem for p in Path(images_dir).glob("*.png")}
     txt_ids = {p.stem for p in labels_root.glob("*.txt")}
 
